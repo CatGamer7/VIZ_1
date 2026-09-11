@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
+    'django_filters',
     'social_media',
     'api',      
 ]
@@ -150,4 +151,5 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 100,
     'EXCEPTION_HANDLER': 'api.exceptions.protected_error_handler',
     'DEFAULT_METADATA_CLASS': 'api.metadata.VerboseMetadata',
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
 }

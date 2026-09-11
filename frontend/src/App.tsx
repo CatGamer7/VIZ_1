@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import CrudForm, { type FormField } from './CrudForm'
+import FilterForm, {
+  type FilterClause,
+  queryParam,
+} from './FilterForm'
 import Pagination from './Pagination'
 
 type TableName =
@@ -77,10 +81,17 @@ function App() {
   const [currentUrl, setCurrentUrl] = useState<string | null>(null)
 
   const [schema, setSchema] = useState<FormField[]>([])
+
+  // CRUD form state
   const [formOpen, setFormOpen] = useState(false)
   const [formValues, setFormValues] = useState<Record<string, string>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [formBusy, setFormBusy] = useState(false)
+
+  // Filter form state
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [filterValues, setFilterValues] = useState<Record<string, FilterClause>>({})
+  const [filtersDirty, setFiltersDirty] = useState(false)
 
   const formRef = useRef<HTMLDivElement | null>(null)
 
@@ -111,6 +122,22 @@ function App() {
     }
   }, [selected])
 
+  const buildUrl = (pageNumber: number, filters = filterValues): string => {
+    const params = new URLSearchParams()
+    for (const [field, clause] of Object.entries(filters)) {
+      const value = clause.value.trim()
+      if (!value) continue
+      const f = schema.find((s) => s.name === field)
+      if (!f) continue
+      const param = queryParam(field, clause.op, f.type)
+      if (!param) continue
+      params.set(param, value)
+    }
+    if (pageNumber > 1) params.set('page', String(pageNumber))
+    const qs = params.toString()
+    return `${API_BASE}/${selected}/${qs ? `?${qs}` : ''}`
+  }
+
   const fetchPage = async (url: string, pageNumber: number) => {
     setLoading(true)
     setError(null)
@@ -130,12 +157,17 @@ function App() {
     }
   }
 
-  const handleFetch = () => fetchPage(`${API_BASE}/${selected}/`, 1)
+  const handleFetch = () => {
+    setFiltersDirty(false)
+    return fetchPage(buildUrl(1), 1)
+  }
 
   const handleTableChange = (next: TableName) => {
     setSelected(next)
     setFormValues({})
     setFormError(null)
+    setFilterValues({})
+    setFiltersDirty(false)
     setData(null)
     setCurrentUrl(null)
     setPage(1)
@@ -236,12 +268,33 @@ function App() {
     })
   }
 
+  const handleFilterChange = (field: string, clause: FilterClause | null) => {
+    setFilterValues((prev) => {
+      const next = { ...prev }
+      if (clause === null) {
+        delete next[field]
+      } else {
+        next[field] = clause
+      }
+      return next
+    })
+    setFiltersDirty(true)
+  }
+
+  const handleFilterClear = () => {
+    setFilterValues({})
+    setFiltersDirty(true)
+  }
+
   const totalPages = data ? Math.ceil(data.count / PAGE_SIZE) : 0
   const columns =
     data && data.results.length > 0 ? Object.keys(data.results[0]) : []
 
   return (
-    <div className="container py-4" style={{ fontFamily: 'system-ui, sans-serif' }}>
+    <div
+      className="container py-4"
+      style={{ fontFamily: 'system-ui, sans-serif' }}
+    >
       <h1 className="mb-4 fs-3">Social Media Explorer</h1>
 
       <div className="d-flex align-items-center gap-2 mb-4">
@@ -251,10 +304,16 @@ function App() {
           onChange={(e) => handleTableChange(e.target.value as TableName)}
         >
           {TABLES.map((t) => (
-            <option key={t} value={t}>{t}</option>
+            <option key={t} value={t}>
+              {t}
+            </option>
           ))}
         </select>
-        <button className="btn btn-primary" onClick={handleFetch} disabled={loading}>
+        <button
+          className="btn btn-primary"
+          onClick={handleFetch}
+          disabled={loading}
+        >
           Fetch
         </button>
         {data && (
@@ -276,6 +335,16 @@ function App() {
         error={formError}
         open={formOpen}
         onToggle={() => setFormOpen((o) => !o)}
+      />
+
+      <FilterForm
+        fields={schema}
+        values={filterValues}
+        onChange={handleFilterChange}
+        onClear={handleFilterClear}
+        open={filterOpen}
+        onToggle={() => setFilterOpen((o) => !o)}
+        dirty={filtersDirty}
       />
 
       {loading && <div className="alert alert-secondary py-2">Loading…</div>}
@@ -301,7 +370,9 @@ function App() {
               <thead className="table-secondary">
                 <tr>
                   {columns.map((c) => (
-                    <th key={c} className="text-start text-nowrap">{c}</th>
+                    <th key={c} className="text-start text-nowrap">
+                      {c}
+                    </th>
                   ))}
                 </tr>
               </thead>
