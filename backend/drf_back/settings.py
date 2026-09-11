@@ -148,4 +148,6 @@ MAILERS = {
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 100,
+    'EXCEPTION_HANDLER': 'api.exceptions.protected_error_handler',
+    'DEFAULT_METADATA_CLASS': 'api.metadata.VerboseMetadata',
 }
