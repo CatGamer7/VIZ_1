@@ -10,31 +10,42 @@ services:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
-#   backend:
-#     build: ./backend
-#     container_name: backend
-#     environment:
-#       DB_HOST: db
-#       DB_PORT: 5432
-#       DB_USER: user
-#       DB_PASS: pspspsps
-#       DB_BASE: db
-#     ports:
-#       - "8000:8000"
-#     depends_on:
-#       - db
-#     restart: unless-stopped
-# 
-#   frontend:
-#     build: ./frontend
-#     container_name: frontend
-#     ports:
-#       - "8080:80"
-#     depends_on:
-#       - backend
-#     restart: unless-stopped
+  backend:
+    build: ./backend
+    container_name: backend
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: user
+      DB_PASS: pspspsps
+      DB_BASE: db
+      DEBUG: "False"
+      SECRET_KEY: "let-me-get-leaked"
+      ALLOWED_HOSTS: "localhost,127.0.0.1,backend,frontend"
+    volumes:
+      - ./backend/data:/app/data:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
 
 volumes:
   postgres_data:

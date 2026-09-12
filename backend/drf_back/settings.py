@@ -41,7 +41,6 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -152,4 +151,12 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'api.exceptions.protected_error_handler',
     'DEFAULT_METADATA_CLASS': 'api.metadata.VerboseMetadata',
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_RENDERER_CLASSES': (
+        [
+            'rest_framework.renderers.JSONRenderer',
+            'rest_framework.renderers.BrowsableAPIRenderer',
+        ] if DEBUG else [
+            'rest_framework.renderers.JSONRenderer',
+        ]
+    ),
 }
