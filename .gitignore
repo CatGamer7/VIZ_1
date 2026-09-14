@@ -95,6 +95,10 @@ lerna-debug.log*
 .env.production.local
 *.env.*
 
+# Untrack data
+data/*
+backend/data/*
+
 # ALLOW environment templates to be committed
 !.env.example
 !.env.template
