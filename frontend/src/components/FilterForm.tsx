@@ -1,4 +1,4 @@
-import type { FormField } from './CrudForm'
+import type { FormField } from '../lib/api'
 
 export interface FilterClause {
   op: string

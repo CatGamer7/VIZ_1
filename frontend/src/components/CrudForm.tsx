@@ -1,13 +1,5 @@
 import type { RefObject } from 'react'
-
-export interface FormField {
-  name: string
-  required: boolean
-  type: string
-  label: string
-  maxLength?: number
-  allowNull: boolean
-}
+import type { FormField } from '../lib/api'
 
 interface CrudFormProps {
   fields: FormField[]
